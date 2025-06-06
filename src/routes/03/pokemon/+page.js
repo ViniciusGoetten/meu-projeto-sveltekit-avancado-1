@@ -1,11 +1,31 @@
-export const prerender = false;
-export const csr = true;
-
 export async function load({ url }) {
   const limit = 12;
-  const offset = Number(url.searchParams.get('offset') || 0);
+  const offset = Number(url.searchParams.get('offset')) || 0;
+  const search = url.searchParams.get('search');
 
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`);
+  if (search) {
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${search.toLowerCase()}`);
+    if (!res.ok) {
+      return { pokemons: [], offset: 0, limit, hasNext: false, hasPrev: false, search };
+    }
+
+    const p = await res.json();
+    const pokemon = {
+      name: p.name,
+      image: p.sprites.front_default
+    };
+
+    return {
+      pokemons: [pokemon],
+      offset: 0,
+      limit,
+      hasNext: false,
+      hasPrev: false,
+      search
+    };
+  }
+
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`);
   const data = await res.json();
 
   for (const pokemon of data.results) {
@@ -13,10 +33,5 @@ export async function load({ url }) {
     pokemon.image = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
   }
 
-  return {
-    pokemons: data.results,
-    offset,
-    count: data.count,
-    limit
-  };
+  return { pokemons: data.results, offset, limit, hasNext: offset + limit < data.count, hasPrev: offset > 0 };
 }
