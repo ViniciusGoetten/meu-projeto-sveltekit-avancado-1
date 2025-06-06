@@ -1,8 +1,8 @@
-export async function load() {
-    const res = await fetch('https://dummyjson.com/users');
-    const data = await res.json();
-
-    return {
-        users: data.users
-    };
-}
+export async function load({ fetch , url }) {
+    const idade = url.searchParams.get('idade');
+    let link = `https://dummyjson.com/users`
+    if (idade) link += `/filter?key=age&value=${idade}`
+      const res = await fetch(link);
+      const users = await res.json();
+      return {users}; 
+    }
